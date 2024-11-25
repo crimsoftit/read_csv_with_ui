@@ -1,6 +1,8 @@
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:read_csv/currency_model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,6 +36,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   List<List<dynamic>> csvContent = [];
+  List<CurrencyModel> foundCsvContent = [];
+
+  List<CurrencyModel> singleItem = [];
+
+  String fK = '';
 
   void loadCSV() async {
     final rawData = await rootBundle.loadString("assets/currencyTings.csv");
@@ -46,9 +53,21 @@ class _MyHomePageState extends State<MyHomePage> {
             eol: '\n')
         .convert(rawData);
 
-    setState(() {
-      csvContent = listData;
-    });
+    setState(
+      () {
+        csvContent = listData;
+
+        for (var element in csvContent) {
+          //var values = element.indexed;
+          foundCsvContent.add(
+            CurrencyModel(
+              country: element[0],
+              curCode: element[3],
+            ),
+          );
+        }
+      },
+    );
   }
 
   @override
@@ -56,7 +75,60 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            children: [
+              TextFormField(
+                autofocus: true,
+                decoration: InputDecoration(
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(
+                      top: 7,
+                    ),
+                    child: Icon(
+                      Iconsax.search_favorite,
+                      color: Colors.brown.withOpacity(0.6),
+                      size: 20,
+                    ),
+                  ),
+                  hintText: 'search currency by country',
+                  hintStyle: TextStyle(
+                    color: Colors.brown.withOpacity(0.6),
+                  ),
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  loadCSV();
+                  setState(() {
+                    foundCsvContent = foundCsvContent
+                        .where((item) => item.country.contains(value))
+                        .toList();
+                  });
+                },
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  loadCSV;
+                  var country = 'Uganda';
+                  setState(() {
+                    singleItem = foundCsvContent
+                        .where((item) => item.country == country)
+                        .toList();
+                    fK = '${singleItem.first.curCode.toString()}';
+                  });
+                },
+                child: Text(
+                  fK,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -66,17 +138,18 @@ class _MyHomePageState extends State<MyHomePage> {
           itemBuilder: (_, index) {
             return Card(
               margin: const EdgeInsets.all(3.0),
-              //color: index == 0 ? Colors.amber : Colors.white,
+              color: index == 0 ? Colors.amber : Colors.white,
               child: ListTile(
                 leading: Text(
-                  csvContent[index][0].toString(),
+                  foundCsvContent[index].country.toString(),
+                  //csvContent[index][0].toString(),
                 ),
-                title: Text(
-                  csvContent[index][1].toString(),
-                ),
-                trailing: Text(
-                  csvContent[index][2].toString(),
-                ),
+                title: Text(foundCsvContent[index].curCode.toString()
+                    //csvContent[index][1].toString(),
+                    ),
+                // trailing: Text(
+                //   csvContent[index][2].toString(),
+                // ),
               ),
             );
           },
